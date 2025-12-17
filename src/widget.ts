@@ -95,6 +95,8 @@ export class DrawioWidget extends Widget {
    * Render the diagram using mxgraph
    */
   private async _renderDiagram(xmlContent: string): Promise<void> {
+    console.log('[DrawIO] Starting render...');
+
     // Clear container
     this._container.innerHTML = '';
     this._errorDiv.style.display = 'none';
@@ -112,10 +114,12 @@ export class DrawioWidget extends Widget {
     if (!mxClient.isBrowserSupported()) {
       throw new Error('Browser not supported for mxGraph');
     }
+    console.log('[DrawIO] Browser supported');
 
     // Parse XML content
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+    console.log('[DrawIO] Parsed XML document');
 
     const parseError = xmlDoc.querySelector('parsererror');
     if (parseError) {
@@ -125,18 +129,24 @@ export class DrawioWidget extends Widget {
     // Find mxGraphModel - handle both mxfile wrapper and direct mxGraphModel
     let graphModelNode = xmlDoc.querySelector('mxGraphModel');
     const mxfileNode = xmlDoc.querySelector('mxfile');
+    console.log('[DrawIO] mxfile found:', !!mxfileNode, 'mxGraphModel found:', !!graphModelNode);
 
     if (!graphModelNode && mxfileNode) {
       // Try to find diagram content - may be compressed
       const diagramNode = xmlDoc.querySelector('diagram');
+      console.log('[DrawIO] diagram node found:', !!diagramNode);
       if (diagramNode) {
         const diagramContent = diagramNode.textContent;
+        console.log('[DrawIO] diagram content length:', diagramContent?.length);
         if (diagramContent) {
           // Try to decode compressed content
           const decodedXml = this._decodeDrawioContent(diagramContent);
+          console.log('[DrawIO] decoded XML length:', decodedXml?.length);
+          console.log('[DrawIO] decoded XML preview:', decodedXml?.substring(0, 200));
           if (decodedXml) {
             const decodedDoc = parser.parseFromString(decodedXml, 'text/xml');
             graphModelNode = decodedDoc.querySelector('mxGraphModel');
+            console.log('[DrawIO] mxGraphModel from decoded:', !!graphModelNode);
           }
         }
       }
@@ -148,8 +158,10 @@ export class DrawioWidget extends Widget {
       );
     }
 
+    console.log('[DrawIO] Creating mxGraph instance...');
     // Create mxGraph instance
     this._graph = new mxGraph(this._graphContainer);
+    console.log('[DrawIO] mxGraph created:', !!this._graph);
 
     // Configure graph for viewing
     this._graph.setEnabled(false); // Read-only
@@ -172,15 +184,48 @@ export class DrawioWidget extends Widget {
     }, this._graphContainer);
 
     // Use mxCodec to decode the XML
-    const codec = new mxCodec(graphModelNode.ownerDocument);
-    codec.decode(graphModelNode, this._graph.getModel());
+    console.log('[DrawIO] Decoding with mxCodec...');
 
-    // Fit to container
+    const model = this._graph.getModel();
+
+    // Try using the codec's decodeCell method
+    const doc = graphModelNode.ownerDocument;
+    const codec = new mxCodec(doc);
+
+    // The key is to decode the entire mxGraphModel element
+    // which should return a fully populated model
+    model.beginUpdate();
+    try {
+      const decodedModel = codec.decode(graphModelNode);
+      console.log('[DrawIO] Decoded model:', decodedModel);
+
+      if (decodedModel && decodedModel.root) {
+        model.setRoot(decodedModel.root);
+        console.log('[DrawIO] Root set from decoded model');
+      }
+    } finally {
+      model.endUpdate();
+    }
+
+    console.log('[DrawIO] Model root:', model.getRoot());
+    const root = model.getRoot();
+    if (root) {
+      console.log('[DrawIO] Root children count:', root.children ? root.children.length : 0);
+      if (root.children && root.children[0]) {
+        const layer = root.children[0];
+        console.log('[DrawIO] Layer children count:', layer.children ? layer.children.length : 0);
+      }
+    }
+
+    // Refresh and fit to container
+    this._graph.refresh();
     this._graph.fit();
     this._graph.center();
+    console.log('[DrawIO] Graph refreshed, fitted and centered');
 
     // Add toolbar
     this._addToolbar();
+    console.log('[DrawIO] Render complete');
   }
 
   /**
