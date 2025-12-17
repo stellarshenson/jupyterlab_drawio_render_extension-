@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab_drawio_render_extension",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "description": "Jupyterlab extension to just render the drawio diagram (viewer in Jupyterlab)",
     "keywords": [
         "jupyter",
@@ -60,6 +60,7 @@
         "@jupyterlab/coreutils": "^6.0.0",
         "@jupyterlab/docregistry": "^4.0.0",
         "@jupyterlab/services": "^7.0.0",
+        "@jupyterlab/ui-components": "^4.5.1",
         "@lumino/coreutils": "^2.0.0",
         "@lumino/widgets": "^2.0.0",
         "mxgraph": "^4.2.2"

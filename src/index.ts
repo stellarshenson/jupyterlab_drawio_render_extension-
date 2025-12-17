@@ -2,6 +2,7 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
+import { LabIcon } from '@jupyterlab/ui-components';
 
 import { DrawioFactory } from './widget';
 
@@ -11,40 +12,26 @@ import { DrawioFactory } from './widget';
 const DRAWIO_EXTENSIONS = ['.drawio', '.dio'];
 
 /**
- * Default file type name
+ * File type name
  */
-const DEFAULT_FILE_TYPE = 'drawio';
+const FILE_TYPE_NAME = 'drawio';
 
 /**
- * Find existing file type that handles .drawio extension
+ * Draw.io icon SVG (orange diagram icon)
  */
-function findDrawioFileType(docRegistry: any): string | null {
-  // Check common file type names first (including vscode-icons extension)
-  const commonNames = [
-    'vscode-drawio',
-    'drawio',
-    'Drawio',
-    'DrawIO',
-    'diagram'
-  ];
-  for (const name of commonNames) {
-    const ft = docRegistry.getFileType(name);
-    if (ft) {
-      return name;
-    }
-  }
+const DRAWIO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 161.6 161.6">
+  <path fill="#D07005" d="M161.6,154.7c0,3.9-3.2,6.9-6.9,6.9H6.9c-3.9,0-6.9-3.2-6.9-6.9V6.9C0,3,3.2,0,6.9,0h147.8c3.9,0,6.9,3.2,6.9,6.9L161.6,154.7z"/>
+  <path fill="#B85A0A" d="M161.6,154.7c0,3.9-3.2,6.9-6.9,6.9H55.3l-32.2-32.7l20-32.7l59.4-73.8l58.9,60.7L161.6,154.7z"/>
+  <path fill="#e0e0e0" d="M132.7,90.3h-17l-18-30.6c4-0.8,7-4.4,7-8.6V28c0-4.9-3.9-8.8-8.8-8.8h-30c-4.9,0-8.8,3.9-8.8,8.8v23.1c0,4.3,3,7.8,6.9,8.6L46,90.4H29c-4.9,0-8.8,3.9-8.8,8.8v23.1c0,4.9,3.9,8.8,8.8,8.8h30c4.9,0,8.8-3.9,8.8-8.8V99.2c0-4.9-3.9-8.8-8.8-8.8h-2.9L73.9,60h13.9l17.9,30.4h-3c-4.9,0-8.8,3.9-8.8,8.8v23.1c0,4.9,3.9,8.8,8.8,8.8h30c4.9,0,8.8-3.9,8.8-8.8V99.2C141.5,94.3,137.6,90.3,132.7,90.3z"/>
+</svg>`;
 
-  // Search all file types for one handling .drawio
-  const fileTypes = docRegistry.fileTypes();
-  for (const ft of fileTypes) {
-    const extensions = ft.extensions || [];
-    if (extensions.some((ext: string) => DRAWIO_EXTENSIONS.includes(ext))) {
-      return ft.name;
-    }
-  }
-
-  return null;
-}
+/**
+ * Create Draw.io icon
+ */
+const drawioIcon = new LabIcon({
+  name: 'drawio:icon',
+  svgstr: DRAWIO_SVG
+});
 
 /**
  * Initialization data for the jupyterlab_drawio_render_extension extension.
@@ -61,32 +48,24 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     const { docRegistry } = app;
 
-    // Find existing file type for .drawio
-    let fileTypeName = findDrawioFileType(docRegistry);
-
-    if (!fileTypeName) {
-      // Register minimal file type only if absolutely none exists
-      // Don't set icon - let vscode-icons or other extensions handle it
-      fileTypeName = DEFAULT_FILE_TYPE;
-      docRegistry.addFileType({
-        name: fileTypeName,
-        displayName: 'Draw.io Diagram',
-        extensions: DRAWIO_EXTENSIONS,
-        mimeTypes: ['application/vnd.jgraph.mxfile']
-      });
-      console.log(`Registered file type: ${fileTypeName}`);
-    } else {
-      console.log(
-        `Using existing file type '${fileTypeName}' for Draw.io diagrams`
-      );
-    }
+    // Register file type with icon
+    docRegistry.addFileType({
+      name: FILE_TYPE_NAME,
+      displayName: 'Draw.io Diagram',
+      extensions: DRAWIO_EXTENSIONS,
+      mimeTypes: ['application/vnd.jgraph.mxfile'],
+      fileFormat: 'text',
+      contentType: 'file',
+      icon: drawioIcon
+    });
+    console.log(`Registered file type: ${FILE_TYPE_NAME}`);
 
     // Create and register widget factory
     const factory = new DrawioFactory({
       name: 'Draw.io Viewer',
       modelName: 'text',
-      fileTypes: [fileTypeName],
-      defaultFor: [fileTypeName],
+      fileTypes: [FILE_TYPE_NAME],
+      defaultFor: [FILE_TYPE_NAME],
       readOnly: true
     });
 
