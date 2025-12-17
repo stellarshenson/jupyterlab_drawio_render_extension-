@@ -2,16 +2,19 @@ import { DocumentWidget } from '@jupyterlab/docregistry';
 import { ABCWidgetFactory, DocumentRegistry } from '@jupyterlab/docregistry';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Widget } from '@lumino/widgets';
+import pako from 'pako';
 
 // Import mxgraph factory
 import factory from 'mxgraph';
 
-// Initialize mxgraph
+// Initialize mxgraph with resource loading disabled
 const mx = factory({
-  mxBasePath: ''
+  mxBasePath: '',
+  mxLoadResources: false,
+  mxLoadStylesheets: false
 });
 
-const { mxGraph, mxCodec, mxUtils, mxEvent, mxClient } = mx;
+const { mxGraph, mxCodec, mxEvent, mxClient } = mx;
 
 /**
  * A widget for displaying Draw.io diagrams using mxgraph
@@ -214,27 +217,20 @@ export class DrawioWidget extends Widget {
   }
 
   /**
-   * Inflate (decompress) data using pako-like algorithm
+   * Inflate (decompress) data using pako
    */
   private _inflate(data: string): string {
-    // Convert string to byte array
+    // Convert binary string to Uint8Array
     const bytes = new Uint8Array(data.length);
     for (let i = 0; i < data.length; i++) {
       bytes[i] = data.charCodeAt(i);
     }
 
-    // Use DecompressionStream API if available
-    if (typeof DecompressionStream !== 'undefined') {
-      // This is async, but we need sync - use fallback
-    }
+    // Use pako to inflate (raw deflate, no header)
+    const inflated = pako.inflateRaw(bytes);
 
-    // Simple inflate using mxUtils if available
-    if (mxUtils && mxUtils.decompress) {
-      return mxUtils.decompress(data);
-    }
-
-    // Fallback: try raw deflate via browser
-    return data;
+    // Convert back to string
+    return new TextDecoder().decode(inflated);
   }
 
   /**
