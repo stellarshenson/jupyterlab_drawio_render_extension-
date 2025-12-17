@@ -63,27 +63,16 @@ function ensureViewerReady(): Promise<void> {
     const baseUrl = PageConfig.getBaseUrl();
     const viewerUrl = `${baseUrl}jupyterlab-drawio-render-extension/static/viewer-static.min.js`;
 
-    console.log('[DrawIO] Loading viewer from:', viewerUrl);
-
     const script = document.createElement('script');
 
     script.onload = () => {
-      console.log('[DrawIO] Viewer script loaded successfully');
-
       // Wait a tick for script to initialize
       setTimeout(() => {
-        if (window.GraphViewer) {
-          console.log('[DrawIO] GraphViewer available');
-          resolve();
-        } else {
-          console.error('[DrawIO] GraphViewer not found after script load');
-          resolve();
-        }
+        resolve();
       }, 100);
     };
 
-    script.onerror = (e) => {
-      console.error('[DrawIO] Failed to load viewer script:', e);
+    script.onerror = () => {
       resolve();
     };
 
@@ -161,7 +150,6 @@ export class DrawioWidget extends Widget {
 
       this._ready.resolve();
     } catch (error) {
-      console.error('Error loading Draw.io diagram:', error);
       this._showError(error);
       this._ready.reject(error);
     }
@@ -171,16 +159,12 @@ export class DrawioWidget extends Widget {
    * Render the diagram using GraphViewer
    */
   private async _renderDiagram(xmlContent: string): Promise<void> {
-    console.log('[DrawIO] Starting render with GraphViewer...');
-
     // Wait for GraphViewer to be available
     await ensureViewerReady();
 
     if (!window.GraphViewer) {
       throw new Error('GraphViewer not available - viewer library failed to load');
     }
-
-    console.log('[DrawIO] GraphViewer available');
 
     // Clear container
     this._container.innerHTML = '';
@@ -215,8 +199,6 @@ export class DrawioWidget extends Widget {
     mxgraphDiv.setAttribute('data-mxgraph', JSON.stringify(config));
     viewerContainer.appendChild(mxgraphDiv);
 
-    console.log('[DrawIO] Processing element with GraphViewer...');
-
     // Use GraphViewer to render
     try {
       // GraphViewer.processElements processes all .mxgraph divs
@@ -227,9 +209,7 @@ export class DrawioWidget extends Widget {
         // Fallback to processElements
         window.GraphViewer.processElements(viewerContainer);
       }
-      console.log('[DrawIO] GraphViewer render complete');
     } catch (e) {
-      console.error('[DrawIO] GraphViewer error:', e);
       throw new Error('GraphViewer failed to render: ' + (e as Error).message);
     }
   }
