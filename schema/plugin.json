@@ -17,6 +17,21 @@
       "title": "Custom Background Color",
       "description": "Hex color for custom background (e.g., #f0f0f0). Only used when background is set to 'custom'",
       "default": "#ffffff"
+    },
+    "exportDPI": {
+      "type": "number",
+      "title": "Export DPI",
+      "description": "Resolution (dots per inch) for PNG export. Higher values produce larger, higher-quality images. Common values: 72 (screen), 150 (draft print), 300 (print quality), 600 (high quality print)",
+      "default": 300,
+      "minimum": 72,
+      "maximum": 1200
+    },
+    "exportBackground": {
+      "type": "string",
+      "title": "Export Background",
+      "description": "Background color for exported PNG images",
+      "enum": ["transparent", "white", "black", "custom"],
+      "default": "white"
     }
   },
   "additionalProperties": false

@@ -40,6 +40,10 @@ let viewerReady: Promise<void> | null = null;
 let currentBackground: string = 'default';
 let customBackgroundColor: string = '#ffffff';
 
+// Export settings
+let exportDPI: number = 300;
+let exportBackground: string = 'white';
+
 // Track all active widgets for background updates
 const activeWidgets: Set<DrawioWidget> = new Set();
 
@@ -64,6 +68,158 @@ export function setBackground(background: string): void {
   activeWidgets.forEach(widget =>
     widget.updateBackground(background, customBackgroundColor)
   );
+}
+
+/**
+ * Set the export DPI
+ */
+export function setExportDPI(dpi: number): void {
+  exportDPI = dpi;
+}
+
+/**
+ * Set the export background
+ */
+export function setExportBackground(background: string): void {
+  exportBackground = background;
+}
+
+/**
+ * Get export settings
+ */
+export function getExportSettings(): {
+  dpi: number;
+  background: string;
+  customColor: string;
+} {
+  return {
+    dpi: exportDPI,
+    background: exportBackground,
+    customColor: customBackgroundColor
+  };
+}
+
+/**
+ * Convert SVG element to PNG blob
+ */
+async function svgToPng(
+  svg: SVGSVGElement,
+  targetDPI: number,
+  background: string,
+  customColor: string
+): Promise<Blob> {
+  // Get SVG dimensions
+  const bbox = svg.getBBox();
+  const viewBox = svg.getAttribute('viewBox');
+  let width: number, height: number;
+
+  if (viewBox) {
+    const parts = viewBox.split(/\s+|,/).map(Number);
+    width = parts[2] || bbox.width;
+    height = parts[3] || bbox.height;
+  } else {
+    width = parseFloat(svg.getAttribute('width') || String(bbox.width));
+    height = parseFloat(svg.getAttribute('height') || String(bbox.height));
+  }
+
+  // Use 96 DPI as source (standard screen DPI)
+  const sourceDPI = 96;
+  const scale = targetDPI / sourceDPI;
+
+  // Create canvas at target resolution
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(width * scale);
+  canvas.height = Math.ceil(height * scale);
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
+
+  // Set background
+  if (background !== 'transparent') {
+    let bgColor: string;
+    switch (background) {
+      case 'white':
+        bgColor = '#ffffff';
+        break;
+      case 'black':
+        bgColor = '#000000';
+        break;
+      case 'custom':
+        bgColor = customColor;
+        break;
+      default:
+        bgColor = '#ffffff';
+    }
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Enable high-quality rendering
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  // Serialize SVG to string and create data URI
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svg);
+  const svgBase64 = btoa(unescape(encodeURIComponent(svgString)));
+  const dataUri = `data:image/svg+xml;base64,${svgBase64}`;
+
+  // Load SVG as image and draw to canvas
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        blob => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create PNG blob'));
+          }
+        },
+        'image/png',
+        1.0
+      );
+    };
+    img.onerror = () => reject(new Error('Failed to load SVG as image'));
+    img.src = dataUri;
+  });
+}
+
+/**
+ * Copy PNG blob to clipboard
+ */
+async function copyPngToClipboard(blob: Blob): Promise<void> {
+  const clipboardItem = new ClipboardItem({ 'image/png': blob });
+  await navigator.clipboard.write([clipboardItem]);
+}
+
+/**
+ * Download PNG blob as file
+ */
+function downloadPng(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Generate PNG filename from document path
+ */
+function generatePngFilename(documentPath: string): string {
+  // Remove extension and get base name
+  const baseName = documentPath
+    .replace(/\.[^/.]+$/, '')
+    .split('/')
+    .pop();
+  return `${baseName || 'diagram'}.png`;
 }
 
 /**
@@ -324,6 +480,63 @@ export class DrawioWidget extends Widget {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Get the document path for filename generation
+   */
+  getDocumentPath(): string {
+    return this._context.localPath;
+  }
+
+  /**
+   * Get the SVG element from the rendered diagram
+   */
+  getSvgElement(): SVGSVGElement | null {
+    // GraphViewer renders SVG inside the container
+    const svg = this._container.querySelector('svg');
+    return svg as SVGSVGElement | null;
+  }
+
+  /**
+   * Export diagram as PNG blob
+   */
+  async exportAsPng(): Promise<Blob | null> {
+    const svg = this.getSvgElement();
+    if (!svg) {
+      return null;
+    }
+
+    const settings = getExportSettings();
+    return svgToPng(
+      svg,
+      settings.dpi,
+      settings.background,
+      settings.customColor
+    );
+  }
+
+  /**
+   * Copy diagram as PNG to clipboard
+   */
+  async copyAsPng(): Promise<void> {
+    const blob = await this.exportAsPng();
+    if (!blob) {
+      throw new Error('No diagram to export');
+    }
+    await copyPngToClipboard(blob);
+  }
+
+  /**
+   * Download diagram as PNG file
+   */
+  async downloadAsPng(): Promise<void> {
+    const blob = await this.exportAsPng();
+    if (!blob) {
+      throw new Error('No diagram to export');
+    }
+    const filename = generatePngFilename(this.getDocumentPath());
+    downloadPng(blob, filename);
   }
 
   /**

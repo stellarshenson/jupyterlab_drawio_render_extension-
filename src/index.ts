@@ -4,11 +4,15 @@ import {
 } from '@jupyterlab/application';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { LabIcon } from '@jupyterlab/ui-components';
+import { DocumentWidget } from '@jupyterlab/docregistry';
 
 import {
   DrawioFactory,
+  DrawioWidget,
   setBackground,
-  setCustomBackgroundColor
+  setCustomBackgroundColor,
+  setExportDPI,
+  setExportBackground
 } from './widget';
 
 /**
@@ -44,6 +48,28 @@ const drawioIcon = new LabIcon({
 const PLUGIN_ID = 'jupyterlab_drawio_render_extension:plugin';
 
 /**
+ * Command IDs
+ */
+const CommandIds = {
+  copyAsPng: 'drawio:copy-as-png',
+  downloadAsPng: 'drawio:download-as-png'
+};
+
+/**
+ * Helper to get DrawioWidget from current widget
+ */
+function getDrawioWidget(app: JupyterFrontEnd): DrawioWidget | null {
+  const widget = app.shell.currentWidget;
+  if (widget instanceof DocumentWidget) {
+    const content = widget.content;
+    if (content instanceof DrawioWidget) {
+      return content;
+    }
+  }
+  return null;
+}
+
+/**
  * Initialization data for the jupyterlab_drawio_render_extension extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
@@ -59,7 +85,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     console.log(
       'JupyterLab extension jupyterlab_drawio_render_extension is activated!'
     );
-    const { docRegistry } = app;
+    const { docRegistry, commands } = app;
 
     // Register file type with icon
     docRegistry.addFileType({
@@ -83,17 +109,74 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     docRegistry.addWidgetFactory(factory);
 
+    // Register Copy as PNG command
+    commands.addCommand(CommandIds.copyAsPng, {
+      label: 'Copy Diagram as PNG',
+      caption: 'Copy diagram to clipboard as PNG image',
+      isEnabled: () => getDrawioWidget(app) !== null,
+      execute: async () => {
+        const widget = getDrawioWidget(app);
+        if (widget) {
+          try {
+            await widget.copyAsPng();
+            console.log('Diagram copied to clipboard as PNG');
+          } catch (error) {
+            console.error('Failed to copy diagram as PNG:', error);
+          }
+        }
+      }
+    });
+
+    // Register Download as PNG command
+    commands.addCommand(CommandIds.downloadAsPng, {
+      label: 'Download Diagram as PNG',
+      caption: 'Download diagram as PNG image file',
+      isEnabled: () => getDrawioWidget(app) !== null,
+      execute: async () => {
+        const widget = getDrawioWidget(app);
+        if (widget) {
+          try {
+            await widget.downloadAsPng();
+            console.log('Diagram downloaded as PNG');
+          } catch (error) {
+            console.error('Failed to download diagram as PNG:', error);
+          }
+        }
+      }
+    });
+
+    // Add context menu items for Draw.io widgets
+    app.contextMenu.addItem({
+      command: CommandIds.copyAsPng,
+      selector: '.jp-DrawioWidget',
+      rank: 1
+    });
+
+    app.contextMenu.addItem({
+      command: CommandIds.downloadAsPng,
+      selector: '.jp-DrawioWidget',
+      rank: 2
+    });
+
     // Load settings if available
     if (settingRegistry) {
       settingRegistry
         .load(PLUGIN_ID)
         .then(settings => {
           const updateSettings = () => {
+            // Background settings
             const background = settings.get('background').composite as string;
             const customColor = settings.get('customBackgroundColor')
               .composite as string;
             setCustomBackgroundColor(customColor);
             setBackground(background);
+
+            // Export settings
+            const dpi = settings.get('exportDPI').composite as number;
+            const exportBg = settings.get('exportBackground')
+              .composite as string;
+            setExportDPI(dpi);
+            setExportBackground(exportBg);
           };
           updateSettings();
           settings.changed.connect(updateSettings);

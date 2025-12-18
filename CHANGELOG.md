@@ -2,6 +2,15 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.0.12
+
+- Add PNG export functionality with context menu commands
+- Copy Diagram as PNG - copies diagram to clipboard at configured DPI
+- Download Diagram as PNG - downloads diagram as PNG file
+- Add exportDPI setting (72-1200 DPI, default 300)
+- Add exportBackground setting (transparent, white, black, custom)
+- SVG to PNG conversion using Canvas API with high-quality rendering
+
 ## 1.0.10
 
 - Add full stencil support for Veeam, Cisco, AWS, Azure, GCP, and all vendor shapes
