@@ -46,8 +46,11 @@ source = "nodejs"
 fields = ["description", "authors", "urls", "keywords"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["jupyterlab_drawio_render_extension/labextension"]
+artifacts = ["jupyterlab_drawio_render_extension/labextension", "jupyterlab_drawio_render_extension/static"]
 exclude = [".github", "binder"]
+
+[tool.hatch.build.targets.wheel]
+artifacts = ["jupyterlab_drawio_render_extension/static"]
 
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyterlab_drawio_render_extension/labextension" = "share/jupyter/labextensions/jupyterlab_drawio_render_extension"

@@ -1,6 +1,6 @@
 # jupyterlab_drawio_render_extension
 
-[![GitHub Actions](https://github.com/stellarshenson/jupyterlab_drawio_render_extension/actions/workflows/build.yml/badge.svg)](https://github.com/stellarshenson/jupyterlab_drawio_render_extension/actions/workflows/build.yml)
+[![GitHub Actions](https://github.com/stellarshenson/jupyterlab_drawio_render_extension-/actions/workflows/build.yml/badge.svg)](https://github.com/stellarshenson/jupyterlab_drawio_render_extension-/actions/workflows/build.yml)
 [![npm version](https://img.shields.io/npm/v/jupyterlab_drawio_render_extension.svg)](https://www.npmjs.com/package/jupyterlab_drawio_render_extension)
 [![PyPI version](https://img.shields.io/pypi/v/jupyterlab-drawio-render-extension.svg)](https://pypi.org/project/jupyterlab-drawio-render-extension/)
 [![Total PyPI downloads](https://static.pepy.tech/badge/jupyterlab-drawio-render-extension)](https://pepy.tech/project/jupyterlab-drawio-render-extension)

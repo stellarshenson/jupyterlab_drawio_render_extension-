@@ -2,8 +2,13 @@
 # author: Stellars Henson <konrad.jelen@gmail.com>
 # License: MIT Open Source License
 
-.PHONY: build install clean uninstall publish dependencies mrproper increment_version install_dependencies check_dependencies upgrade help
+.PHONY: build install clean uninstall publish dependencies mrproper increment_version install_dependencies check_dependencies upgrade help fetch_drawio_assets
 .DEFAULT_GOAL := help
+
+# Draw.io repository for stencils and shapes
+DRAWIO_REPO := https://github.com/jgraph/drawio.git
+DRAWIO_DIR := drawio-repo
+STATIC_DIR := jupyterlab_drawio_render_extension/static
 
 # Read current version from package.json (only if node is available)
 VERSION := $(shell command -v node >/dev/null 2>&1 && node -p "require('./package.json').version" || echo "0.0.0")
@@ -18,8 +23,23 @@ increment_version:
 	echo "New version: $$NEW_VERSION"; \
 	sed -i "s/\"version\": \"$$CURRENT_VERSION\"/\"version\": \"$$NEW_VERSION\"/" package.json; '
 
+## fetch Draw.io assets (viewer, shapes, stencils)
+fetch_drawio_assets:
+	@echo "Fetching Draw.io assets..."
+	@if [ ! -d "$(DRAWIO_DIR)" ]; then \
+		echo "Cloning Draw.io repository..."; \
+		git clone --depth 1 $(DRAWIO_REPO) $(DRAWIO_DIR); \
+	else \
+		echo "Draw.io repository already cloned."; \
+	fi
+	@echo "Copying shapes and stencils to static directory..."
+	@mkdir -p $(STATIC_DIR)
+	@cp $(DRAWIO_DIR)/src/main/webapp/js/shapes.min.js $(STATIC_DIR)/
+	@cp $(DRAWIO_DIR)/src/main/webapp/js/stencils.min.js $(STATIC_DIR)/
+	@echo "Draw.io assets ready."
+
 ## build packages
-build: clean increment_version check_dependencies
+build: clean increment_version check_dependencies fetch_drawio_assets
 	npm install
 	yarn install
 	python -m build
@@ -71,7 +91,7 @@ upgrade: check_dependencies
 
 ## cleanup all build and metabuild artefacts
 mrproper: clean uninstall
-	rm -rf node_modules .yarn || true
+	rm -rf node_modules .yarn $(DRAWIO_DIR) || true
 
 ## prints the list of available commands
 help:

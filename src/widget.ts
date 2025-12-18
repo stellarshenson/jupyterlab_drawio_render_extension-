@@ -65,15 +65,27 @@ export function setBackground(background: string): void {
   );
 }
 
+/**
+ * Load a script and return a promise
+ */
+function loadScript(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
 function ensureViewerReady(): Promise<void> {
   if (viewerReady) {
     return viewerReady;
   }
 
-  viewerReady = new Promise((resolve) => {
-    // If already loaded, resolve immediately
+  viewerReady = (async () => {
+    // If already loaded, return immediately
     if (window.GraphViewer) {
-      resolve();
       return;
     }
 
@@ -89,26 +101,23 @@ function ensureViewerReady(): Promise<void> {
     window.DRAW_MATH_URL = '';
     window.GRAPH_IMAGE_PATH = '';
 
-    // Load viewer script from server static endpoint
+    // Load scripts in order from server static endpoint
     const baseUrl = PageConfig.getBaseUrl();
-    const viewerUrl = `${baseUrl}jupyterlab-drawio-render-extension/static/viewer-static.min.js`;
+    const staticBase = `${baseUrl}jupyterlab-drawio-render-extension/static`;
 
-    const script = document.createElement('script');
+    // Load viewer first
+    await loadScript(`${staticBase}/viewer-static.min.js`);
 
-    script.onload = () => {
-      // Wait a tick for script to initialize
-      setTimeout(() => {
-        resolve();
-      }, 100);
-    };
+    // Wait a tick for viewer to initialize
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    script.onerror = () => {
-      resolve();
-    };
+    // Load shapes and stencils for custom shape support (Veeam, Cisco, etc.)
+    await loadScript(`${staticBase}/shapes.min.js`);
+    await loadScript(`${staticBase}/stencils.min.js`);
 
-    script.src = viewerUrl;
-    document.head.appendChild(script);
-  });
+    // Wait for stencils to register
+    await new Promise(resolve => setTimeout(resolve, 100));
+  })();
 
   return viewerReady;
 }
