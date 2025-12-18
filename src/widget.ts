@@ -100,7 +100,7 @@ export function getExportSettings(): {
 }
 
 /**
- * Convert SVG element to PNG blob
+ * Convert SVG element to PNG blob, cropped to diagram content
  */
 async function svgToPng(
   svg: SVGSVGElement,
@@ -108,19 +108,15 @@ async function svgToPng(
   background: string,
   customColor: string
 ): Promise<Blob> {
-  // Get SVG dimensions
+  // Get the actual bounding box of content from original SVG
   const bbox = svg.getBBox();
-  const viewBox = svg.getAttribute('viewBox');
-  let width: number, height: number;
 
-  if (viewBox) {
-    const parts = viewBox.split(/\s+|,/).map(Number);
-    width = parts[2] || bbox.width;
-    height = parts[3] || bbox.height;
-  } else {
-    width = parseFloat(svg.getAttribute('width') || String(bbox.width));
-    height = parseFloat(svg.getAttribute('height') || String(bbox.height));
-  }
+  // Add padding around the content (10 pixels)
+  const padding = 10;
+  const cropX = bbox.x - padding;
+  const cropY = bbox.y - padding;
+  const cropWidth = bbox.width + padding * 2;
+  const cropHeight = bbox.height + padding * 2;
 
   // Use 96 DPI as source (standard screen DPI)
   const sourceDPI = 96;
@@ -128,8 +124,8 @@ async function svgToPng(
 
   // Create canvas at target resolution
   const canvas = document.createElement('canvas');
-  canvas.width = Math.ceil(width * scale);
-  canvas.height = Math.ceil(height * scale);
+  canvas.width = Math.ceil(cropWidth * scale);
+  canvas.height = Math.ceil(cropHeight * scale);
 
   const ctx = canvas.getContext('2d');
   if (!ctx) {
@@ -160,9 +156,18 @@ async function svgToPng(
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
+  // Clone SVG and set viewBox to crop to content
+  const svgClone = svg.cloneNode(true) as SVGSVGElement;
+  svgClone.setAttribute('viewBox', `${cropX} ${cropY} ${cropWidth} ${cropHeight}`);
+  svgClone.setAttribute('width', String(cropWidth));
+  svgClone.setAttribute('height', String(cropHeight));
+  // Remove any inline width/height styles that might override attributes
+  svgClone.style.width = '';
+  svgClone.style.height = '';
+
   // Serialize SVG to string and create data URI
   const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(svg);
+  const svgString = serializer.serializeToString(svgClone);
   const svgBase64 = btoa(unescape(encodeURIComponent(svgString)));
   const dataUri = `data:image/svg+xml;base64,${svgBase64}`;
 
