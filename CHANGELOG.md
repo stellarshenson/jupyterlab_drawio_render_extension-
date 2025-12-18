@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 1.0.10
+
+- Add full stencil support for Veeam, Cisco, AWS, Azure, GCP, and all vendor shapes
+- Load shapes.min.js (1.2MB) and stencils.min.js (7.5MB) from Draw.io repository
+- Add `fetch_drawio_assets` Makefile target to clone Draw.io repo and copy assets
+- Include static files in wheel package via pyproject.toml artifacts
+- Fix repository URLs after rename (removed trailing hyphen)
+- Apply code linting and formatting
+
+## 1.0.9
+
+- Update CI/CD workflows to match jupyterlab_vscode_icons_extension pattern
+- Remove failing lint/test steps from build workflow
+- Update Python version to 3.12
+- Add ignore_links for badge URLs in check-links job
+
 ## 1.0.8
 
 - Rename background options from dark/light to black/white for clarity
