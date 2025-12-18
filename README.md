@@ -1,6 +1,6 @@
 # jupyterlab_drawio_render_extension
 
-[![GitHub Actions](https://github.com/stellarshenson/jupyterlab_drawio_render_extension-/actions/workflows/build.yml/badge.svg)](https://github.com/stellarshenson/jupyterlab_drawio_render_extension-/actions/workflows/build.yml)
+[![GitHub Actions](https://github.com/stellarshenson/jupyterlab_drawio_render_extension/actions/workflows/build.yml/badge.svg)](https://github.com/stellarshenson/jupyterlab_drawio_render_extension/actions/workflows/build.yml)
 [![npm version](https://img.shields.io/npm/v/jupyterlab_drawio_render_extension.svg)](https://www.npmjs.com/package/jupyterlab_drawio_render_extension)
 [![PyPI version](https://img.shields.io/pypi/v/jupyterlab-drawio-render-extension.svg)](https://pypi.org/project/jupyterlab-drawio-render-extension/)
 [![Total PyPI downloads](https://static.pepy.tech/badge/jupyterlab-drawio-render-extension)](https://pepy.tech/project/jupyterlab-drawio-render-extension)
@@ -27,9 +27,9 @@ This extension uses the official [Draw.io viewer library](https://github.com/jgr
 
 Configure the viewer background in **Settings > Draw.io Viewer**:
 
-| Setting | Description |
-|---------|-------------|
-| Background | `default` (theme), `black`, `white`, or `custom` |
+| Setting                 | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| Background              | `default` (theme), `black`, `white`, or `custom`               |
 | Custom Background Color | Hex color (e.g., `#f0f0f0`) when background is set to `custom` |
 
 ## Requirements

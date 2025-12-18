@@ -5,7 +5,11 @@ import {
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { LabIcon } from '@jupyterlab/ui-components';
 
-import { DrawioFactory, setBackground, setCustomBackgroundColor } from './widget';
+import {
+  DrawioFactory,
+  setBackground,
+  setCustomBackgroundColor
+} from './widget';
 
 /**
  * Extensions we handle

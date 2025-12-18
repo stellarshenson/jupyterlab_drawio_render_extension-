@@ -138,15 +138,15 @@
 
 .jp-DrawioWidget-bg-black .jp-DrawioWidget-container,
 .jp-DrawioWidget-bg-black .jp-DrawioWidget-viewer {
-  background: #000000;
+  background: #000;
 }
 
 .jp-DrawioWidget-bg-white .jp-DrawioWidget-container,
 .jp-DrawioWidget-bg-white .jp-DrawioWidget-viewer {
-  background: #ffffff;
+  background: #fff;
 }
 
 .jp-DrawioWidget-bg-custom .jp-DrawioWidget-container,
 .jp-DrawioWidget-bg-custom .jp-DrawioWidget-viewer {
-  background: var(--jp-drawio-custom-bg, #ffffff);
+  background: var(--jp-drawio-custom-bg, #fff);
 }

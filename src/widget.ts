@@ -6,6 +6,7 @@ import { PageConfig } from '@jupyterlab/coreutils';
 
 // Declare GraphViewer on window
 declare global {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   interface Window {
     GraphViewer: any;
     mxGraphModel: any;
@@ -231,7 +232,9 @@ export class DrawioWidget extends Widget {
     await ensureViewerReady();
 
     if (!window.GraphViewer) {
-      throw new Error('GraphViewer not available - viewer library failed to load');
+      throw new Error(
+        'GraphViewer not available - viewer library failed to load'
+      );
     }
 
     // Clear container
